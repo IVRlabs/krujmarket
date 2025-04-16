@@ -13,6 +13,10 @@ import os
 from pathlib import Path
 import sys
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  # Загружает переменные из .env
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))  # Добавляем корень проекта в пути
@@ -26,7 +30,7 @@ from django.conf.global_settings import MEDIA_URL, MEDIA_ROOT
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-13v7(-3bzq9yjq)f2r)q^x#=xpab7205xdn5rat=xooq1e7wis'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

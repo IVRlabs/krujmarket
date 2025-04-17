@@ -1,3 +1,83 @@
 from django.db import models
+from django.conf import settings
+from products.models import Product  # Импорт модели товара из приложения market
 
-# Create your models here.
+class Cart(models.Model):
+    """
+    Модель корзины пользователя.
+    Хранит связь с пользователем (для авторизованных) или session_key (для гостей)
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name="Пользователь"
+    )
+    session_key = models.CharField(
+        max_length=40,
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name="Ключ сессии"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Дата создания"
+    )
+
+    class Meta:
+        verbose_name = "Корзина"
+        verbose_name_plural = "Корзины"
+        unique_together = [['user', 'session_key']]  # Предотвращаем дубликаты
+
+    def __str__(self):
+        return f"Корзина {self.user or self.session_key}"
+
+    @property
+    def total_price(self):
+        """Сумма всех товаров в корзине"""
+        return sum(item.price * item.quantity for item in self.items.all())
+
+    @property
+    def total_quantity(self):
+        """Общее количество товаров"""
+        return sum(item.quantity for item in self.items.all())
+
+class CartItem(models.Model):
+    """
+    Элемент корзины. Связывает товар с корзиной, хранит количество и цену
+    """
+    cart = models.ForeignKey(
+        Cart,
+        on_delete=models.CASCADE,
+        related_name='items',
+        verbose_name="Корзина"
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        verbose_name="Товар"
+    )
+    quantity = models.PositiveIntegerField(
+        default=1,
+        verbose_name="Количество"
+    )
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name="Цена за единицу"
+    )
+
+    class Meta:
+        verbose_name = "Элемент корзины"
+        verbose_name_plural = "Элементы корзины"
+        unique_together = [['cart', 'product']]  # Один товар - одна позиция
+
+    def __str__(self):
+        return f"{self.product.name} x{self.quantity}"
+
+    @property
+    def total_price(self):
+        """Общая стоимость позиции"""
+        return self.price * self.quantity

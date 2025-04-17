@@ -67,3 +67,16 @@ class ContactsView(TemplateView):
 class BlogView(TemplateView):
     template_name = 'blog.html'
 
+
+from django.shortcuts import redirect
+from cart.models import Cart, CartItem
+
+
+def add_to_cart(request, product_id):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+    # Логика добавления товара в корзину
+
+    return redirect('product_list')

@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Магазин украшений{% endblock %}</title>
     <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/lux/bootstrap.min.css" rel="stylesheet">
+    <!--<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">-->
     <!-- Иконки FontAwesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -36,27 +37,66 @@
         .nav-btn i {
              margin-right: 5px;
         }
+        /* Для всех кнопок с классом .centered-btn */
+            .centered-btn {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0.375rem 0.75rem;
+            min-width: 100px; /* Фиксированная ширина */
+            height: 40px; /* Фиксированная высота */
+        }
+
+        /* Если используете иконки рядом с текстом */
+        .centered-btn i {
+            margin-right: 8px;
+        }
+
+        .centered-btn {
+            transition: all 0.3s ease;
+        }
+        .centered-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .cart-btn-custom {
+        position: relative;
+        top: -5px; /* Сдвиг вверх */
+        right: -15px; /* Сдвиг вправо */
+    }
+        .btn-outline-dark {
+        border-width: 0.5px !important; /* Толщина обводки */
+        border-color: #212529 !important; /* Цвет обводки */
+    }
     </style>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
 <body>
     <!-- Навигация -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container">
-        <a class="navbar-brand" href="{% url 'pages:home' %}">JewelryShop</a>
+        <a class="navbar-brand" href="{% url 'pages:home' %}"><span class="centered-btn i text-decoration-none" style="display: block; text-align: right; padding-right: 10;">K Р У Ж Е В О .online</span></a>
         <div class="d-flex">
             <!-- Полный набор кнопок -->
-            <a href="{% url 'products:product_list' %}" class="btn nav-btn me-2">
-                <i class="fas fa-store"></i> Магазин
+            <a href="{% url 'products:product_list' %}" class="centered-btn i text-decoration-none">
+                <i class="fas fa-store"></i>Магазин
             </a>
-            <a href="{% url 'pages:blog' %}" class="btn nav-btn me-2">
-                <i class="fas fa-newspaper"></i> Статьи
+            <!--<a href="{% url 'pages:blog' %}" class="btn nav-btn me-2"> -->
+            <a href="{% url 'pages:blog' %}" class="centered-btn i text-decoration-none">
+                <i></i> Статьи
             </a>
-            <a href="{% url 'pages:about' %}" class="btn nav-btn me-2">О нас</a>
-            <a href="{% url 'pages:contacts' %}" class="btn nav-btn me-2">Контакты</a>
-
-            <a href="{% url 'cart:detail' %}" class="btn btn-outline-dark">
-               <i class="fas fa-shopping-cart"></i>
-               <span class="badge bg-danger">{{ cart|length }}</span>
+            <a href="{% url 'pages:about' %}" class="centered-btn i text-decoration-none">О нас</a>
+            <a href="{% url 'pages:contacts' %}" class="centered-btn i text-decoration-none">Контакты</a>
+            <!--<a href="{% url 'cart:cart_detail' %}" class="btn btn-outline-dark position-relative mb-2 ms-3"> -->
+            <a href="{% url 'cart:cart_detail' %}" class="btn btn-outline-dark cart-btn-custom">
+              <i class="bi bi-basket"></i>  <!-- Иконка корзины -->
+                <span id="cart-counter"
+                class="position-absolute top-0 start-100 translate-middle badge bg-danger rounded-pill"
+                style="font-size: 0.6em;">
+                {{ cart.total_quantity|default:0 }}
+               </span>
             </a>
 
         </div>
@@ -68,5 +108,29 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- В конце файла templates/base.html -->
+    {% block scripts %}
+    <script>
+    // Функция обновления счетчика корзины
+    function updateCartCounter() {
+        fetch('{% url "cart:cart_summary" %}')
+            .then(response => response.json())
+            .then(data => {
+                const counter = document.getElementById('cart-counter');
+                if (counter) {
+                    counter.textContent = data.total_quantity;
+                }
+            });
+    }
+
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCartCounter();
+
+        // Подписываемся на события обновления корзины
+        document.addEventListener('cartUpdated', updateCartCounter);
+    });
+    </script>
+    {% endblock %}
 </body>
 </html>

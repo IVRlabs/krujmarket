@@ -80,3 +80,55 @@ def add_to_cart(request, product_id):
     # Логика добавления товара в корзину
 
     return redirect('product_list')
+
+
+from django.views.generic import ListView
+from django.db.models import Q
+from .models import Product
+from .forms import ProductFilterForm
+
+
+class ProductFilterView(ListView):
+    """
+    Представление для фильтрации товаров с обработкой GET-параметров
+    """
+    model = Product
+    template_name = 'products/product_list.html'  # Используем тот же шаблон
+    context_object_name = 'products'
+    paginate_by = 12
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        form = ProductFilterForm(self.request.GET)
+
+        if form.is_valid():
+            # Фильтрация по категории
+            if category := form.cleaned_data['category']:
+                queryset = queryset.filter(category=category)
+
+            # Фильтрация по цене
+            price_filters = Q()
+            if price_min := form.cleaned_data['price_min']:
+                price_filters &= Q(price__gte=price_min)
+            if price_max := form.cleaned_data['price_max']:
+                price_filters &= Q(price__lte=price_max)
+            queryset = queryset.filter(price_filters)
+
+            # Сортировка
+            if sort_by := form.cleaned_data['sort']:
+                if sort_by == 'price_asc':
+                    queryset = queryset.order_by('price')
+                elif sort_by == 'price_desc':
+                    queryset = queryset.order_by('-price')
+                elif sort_by == 'newest':
+                    queryset = queryset.order_by('-created_at')
+
+        return queryset.select_related('category')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['filter_form'] = ProductFilterForm(self.request.GET)
+        context['is_filtered'] = bool(self.request.GET)
+        return context
+
+

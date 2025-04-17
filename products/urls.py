@@ -1,14 +1,14 @@
-# Стандартные импорты Django
 from django.urls import path
-from django.utils.translation import gettext_lazy as _
+from .views import (
+    ProductListView,
+    ProductDetailView,
+    ProductFilterView  # Новое представление
+)
 
-# Локальные импорты (представления текущего приложения)
-from . import views
-from .views import AboutView, ContactsView, BlogView
-app_name = 'products'  # Пространство имён приложения
-from .views import ProductListView, ProductDetailView
+app_name = 'products'
 
 urlpatterns = [
-    path('', ProductListView.as_view(), name='product_list'),  # /products/
-    path('<slug:slug>/', ProductDetailView.as_view(), name='detail'),  # /products/кольцо/
+    path('', ProductListView.as_view(), name='product_list'),
+    path('filter/', ProductFilterView.as_view(), name='product_filter'),  # Новый путь
+    path('<slug:slug>/', ProductDetailView.as_view(), name='detail'),
 ]

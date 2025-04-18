@@ -19,26 +19,44 @@ def get_or_create_cart(request):
     return cart
 
 
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+
+
+@require_POST
 def add_to_cart(request, product_id):
-    """
-    Добавляет товар в корзину или увеличивает количество, если уже добавлен
-    """
-    product = get_object_or_404(Product, id=product_id)
+    """Добавляет товар в корзину (AJAX-версия)"""
     cart = get_or_create_cart(request)
 
-    # Пытаемся найти товар в корзине
-    cart_item, created = CartItem.objects.get_or_create(
-        cart=cart,
-        product=product,
-        defaults={'price': product.price}  # Фиксируем цену при первом добавлении
-    )
+    try:
+        product = Product.objects.get(id=product_id)
+        cart_item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            product=product,
+            defaults={'price': product.price, 'quantity': 1}
+        )
 
-    if not created:
-        cart_item.quantity += 1
-        cart_item.save()
+        if not created:
+            cart_item.quantity += 1
+            cart_item.save()
 
-    messages.success(request, f"{product.name} добавлен в корзину")
-    return redirect('products:product_list')
+        return JsonResponse({
+            'success': True,
+            'cart_total_items': cart.total_quantity,
+            'message': f"{product.name} добавлен в корзину"
+        })
+
+    except Product.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Товар не найден'
+        }, status=404)
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
 
 
 def remove_from_cart(request, item_id):

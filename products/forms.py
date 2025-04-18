@@ -1,49 +1,17 @@
 from django import forms
 from .models import Category
 
-class ProductFilterForm(forms.Form):
-    """
-    Форма фильтрации товаров с базовыми полями:
-    - Выбор категории
-    - Диапазон цен
-    - Сортировка
-    """
-    SORT_CHOICES = [
-        ('price_asc', 'От дешевых'),
-        ('price_desc', 'От дорогих'),
-        ('newest', 'Новинки'),
-    ]
 
+class ProductFilterForm(forms.Form):
     category = forms.ModelChoiceField(
-        queryset=Category.objects.all(),
+        queryset=Category.objects.none(),  # Пустой queryset по умолчанию
         required=False,
         label="Категория",
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
+        widget=forms.Select(attrs={'class': 'form-select'}))
 
-    price_min = forms.IntegerField(
-        required=False,
-        label="Цена от",
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'placeholder': '₽',
-            'min': 0
-        })
-    )
-
-    price_max = forms.IntegerField(
-        required=False,
-        label="Цена до",
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'placeholder': '₽',
-            'min': 0
-        })
-    )
-
-    sort = forms.ChoiceField(
-        choices=SORT_CHOICES,
-        required=False,
-        label="Сортировка",
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Динамически обновляем queryset
+        self.fields['category'].queryset = Category.objects.filter(
+            products__is_active=True
+        ).distinct()

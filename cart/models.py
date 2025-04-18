@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from products.models import Product  # Импорт модели товара из приложения market
-
+from django.db.models import Sum, F
 class Cart(models.Model):
     """
     Модель корзины пользователя.
@@ -35,14 +35,16 @@ class Cart(models.Model):
         return f"Корзина {self.user or self.session_key}"
 
     @property
-    def total_price(self):
-        """Сумма всех товаров в корзине"""
-        return sum(item.price * item.quantity for item in self.items.all())
+    def total_quantity(self):
+        return self.items.aggregate(
+            total=Sum('quantity')
+        )['total'] or 0
 
     @property
-    def total_quantity(self):
-        """Общее количество товаров"""
-        return sum(item.quantity for item in self.items.all())
+    def total_price(self):
+        return self.items.aggregate(
+            total=Sum(F('quantity') * F('price'))
+        )['total'] or 0
 
 class CartItem(models.Model):
     """

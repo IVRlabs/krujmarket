@@ -1,52 +1,127 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 <div class="container mt-4">
-    <!-- Фильтры (раскрываемая панель) -->
+    <!-- Фильтры -->
     <div class="mb-4">
-        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+        <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
+                data-bs-target="#filterCollapse" aria-expanded="false">
             <i class="bi bi-funnel"></i> Фильтры
+            {% if request.GET.category %}
+            <span class="badge bg-danger ms-1">активно</span>
+            {% endif %}
         </button>
 
         <div class="collapse mt-2" id="filterCollapse">
             <div class="card card-body">
-                <form method="get" class="row g-3">
-                    {{ filter_form.as_p }}
-                    <div class="col-12">
-                        <button type="submit" class="btn btn-success">
-                            <i class="bi bi-check-circle"></i> Применить
-                        </button>
-                        {% if is_filtered %}
-                        <a href="{% url 'products:product_list' %}" class="btn btn-outline-secondary ms-2">
-                            <i class="bi bi-x-circle"></i> Сбросить
-                        </a>
-                        {% endif %}
+                <form method="get">
+                    <div class="row g-3">
+                        <!-- Категории -->
+                        <div class="col-md-6">
+                            <label class="form-label">Категория</label>
+                            <select name="category" class="form-select">
+                                <option value="">Все категории</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.slug }}"
+                                    {% if request.GET.category == cat.slug %}selected{% endif %}>
+                                    {{ cat.name }} ({{ cat.product_count }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Цена -->
+                        <div class="col-md-3">
+                            <label class="form-label">Цена от</label>
+                            <input type="number" name="price_min" value="{{ request.GET.price_min }}"
+                                   class="form-control" placeholder="₽" min="0">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Цена до</label>
+                            <input type="number" name="price_max" value="{{ request.GET.price_max }}"
+                                   class="form-control" placeholder="₽" min="0">
+                        </div>
+
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Применить
+                            </button>
+                            {% if request.GET %}
+                            <a href="{% url 'products:product_list' %}" class="btn btn-outline-secondary ms-2">
+                                <i class="bi bi-x-circle"></i> Сбросить
+                            </a>
+                            {% endif %}
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Список товаров -->
+    <!-- Товары -->
     <div class="row">
         {% for product in products %}
         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
             <div class="card h-100">
-                <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                <img src="{{ product.image.url }}" class="card-img-top"
+                     style="height: 200px; object-fit: cover;"
+                     alt="{{ product.name }}"
+                     onerror="this.src='{% static 'images/placeholder.png' %}'">
                 <div class="card-body">
-                    <h5 class="card-title">{{ product.name|truncatechars:30 }}</h5>
-                    <p class="card-text text-danger fw-bold">{{ product.price }} ₽</p>
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <p class="text-danger fw-bold">{{ product.price }} ₽</p>
+                </div>
+                <div class="card-footer bg-white">
                     <a href="{% url 'products:detail' product.slug %}" class="btn btn-sm btn-outline-dark">
                         Подробнее
                     </a>
+                    <button class="btn btn-sm btn-success float-end" onclick="addToCart({{ product.id }}, '{{ csrf_token }}')">
+                    В корзину
+                    </button>
                 </div>
             </div>
         </div>
         {% empty %}
         <div class="col-12">
-            <div class="alert alert-warning">Товары не найдены. Попробуйте изменить параметры фильтрации.</div>
+            <div class="alert alert-warning">Товары не найдены</div>
         </div>
         {% endfor %}
     </div>
 </div>
+<script>
+function addToCart(productId, csrfToken) {
+    fetch(`/cart/add/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            'quantity': 1
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Обновляем счетчик корзины (если есть такой элемент)
+            const cartCounter = document.getElementById('cart-counter');
+            if (cartCounter) {
+                cartCounter.textContent = data.cart_total_items;
+            }
+
+            // Показываем уведомление
+            const toast = new bootstrap.Toast(document.getElementById('addedToCartToast'));
+            toast.show();
+        } else {
+            alert('Ошибка: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при добавлении в корзину');
+    });
+}
+</script>
 {% endblock %}

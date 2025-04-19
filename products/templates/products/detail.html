@@ -38,7 +38,10 @@
             </div>
            
             <div class="actions">
-                <button class="btn btn-primary btn-sm">Добавить в корзину</button>
+                <button class="btn btn-primary btn-sm" onclick="addToCart({{ product.id }}, '{{ csrf_token }}')">
+                    Добавить в корзину
+                </button>
+                <div id="cartMessage" class="mt-2 text-success" style="display:none;"></div>
             </div>
            
             {% if product.additional_images.exists %}
@@ -67,4 +70,39 @@
         border: 2px solid #007bff;
     }
 </style>
+
+<script>
+function addToCart(productId, csrfToken) {
+    fetch(`/cart/add/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            'quantity': 1
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Обновляем счетчик корзины (если есть такой элемент)
+            const cartCounter = document.getElementById('cart-counter');
+            if (cartCounter) {
+                cartCounter.textContent = data.cart_total_items;
+            }
+
+            // Показываем уведомление
+            const toast = new bootstrap.Toast(document.getElementById('addedToCartToast'));
+            toast.show();
+        } else {
+            alert('Ошибка: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при добавлении в корзину');
+    });
+}
+</script>
 {% endblock %}

@@ -11,6 +11,9 @@ class ContactsView(TemplateView):
 class BlogView(TemplateView):
     template_name = 'pages/blog.html'
 
+class DostavkaView(TemplateView):
+    template_name = 'pages/dostavka_oplata.html'
+
 
 class HomeView(TemplateView):
     template_name = 'pages/home.html'

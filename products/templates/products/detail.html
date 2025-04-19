@@ -12,17 +12,7 @@
                      id="mainProductImage">
             </div>
            
-            <div class="thumbnail-container d-flex flex-wrap">
-                {% for image in all_images %}
-                <div class="thumbnail-item p-1">
-                    <img src="{{ image.url }}"
-                         class="img-thumbnail {% if forloop.first %}active{% endif %}"
-                         alt="{{ product.name }}"
-                         style="cursor: pointer; width: 80px;"
-                         onclick="document.getElementById('mainProductImage').src = this.src">
-                </div>
-                {% endfor %}
-            </div>
+
         </div>
        
         <!-- Информация о товаре -->
@@ -38,7 +28,7 @@
             </div>
            
             <div class="actions">
-                <button class="btn btn-primary btn-sm" onclick="addToCart({{ product.id }}, '{{ csrf_token }}')">
+                <button class="btn btn-sm btn-success" onclick="addToCart({{ product.id }}, '{{ csrf_token }}')">
                     Добавить в корзину
                 </button>
                 <div id="cartMessage" class="mt-2 text-success" style="display:none;"></div>
@@ -47,15 +37,18 @@
             {% if product.additional_images.exists %}
             <div class="mt-4">
                 <h5>Другие изображения:</h5>
-                <div class="row">
-                    {% for image in product.additional_images.all %}
-                    <div class="col-4 mb-3">
-                        <img src="{{ image.image.url }}"
-                             class="img-fluid rounded"
-                             alt="{{ image.alt_text|default:product.name }}">
+                <div class="thumbnail-container d-flex flex-wrap">
+                    {% for image in all_images %}
+                    <div class="thumbnail-item p-1">
+                    <img src="{{ image.url }}"
+                         class="img-thumbnail "
+                         alt="{{ product.name }}"
+                         style="cursor: pointer; width: 80px;"
+                         onclick="changeMainImage(this, '{{ image.url }}')">
                     </div>
                     {% endfor %}
                 </div>
+
             </div>
             {% endif %}
         </div>
@@ -69,9 +62,41 @@
     .thumbnail-item img.active {
         border: 2px solid #007bff;
     }
+    /* Стили для активной превьюшки */
+.active-thumbnail {
+    border: 3px solid #007bff !important;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.3);
+    position: relative;
+}
+
+/* Эффекты при наведении */
+.thumbnail-item img {
+    transition: all 0.2s ease;
+    border: 2px solid #ddd;
+}
+
+.thumbnail-item img:hover {
+    transform: scale(1.05);
+    border-color: #aaa;
+}
 </style>
 
 <script>
+// Функция для смены главного изображения и обводки
+function changeMainImage(clickedThumb, newImageUrl) {
+    // Меняем главное фото
+    document.getElementById('mainProductImage').src = newImageUrl;
+
+    // Удаляем класс active у всех превьюшек
+    document.querySelectorAll('.thumbnail-item img').forEach(img => {
+        img.classList.remove('active-thumbnail');
+    });
+
+    // Добавляем класс active к текущей превьюшке
+    clickedThumb.classList.add('active-thumbnail');
+}
+
+// Ваша существующая функция addToCart (без изменений)
 function addToCart(productId, csrfToken) {
     fetch(`/cart/add/${productId}/`, {
         method: 'POST',
@@ -86,13 +111,10 @@ function addToCart(productId, csrfToken) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Обновляем счетчик корзины (если есть такой элемент)
             const cartCounter = document.getElementById('cart-counter');
             if (cartCounter) {
                 cartCounter.textContent = data.cart_total_items;
             }
-
-            // Показываем уведомление
             const toast = new bootstrap.Toast(document.getElementById('addedToCartToast'));
             toast.show();
         } else {
@@ -104,5 +126,13 @@ function addToCart(productId, csrfToken) {
         alert('Произошла ошибка при добавлении в корзину');
     });
 }
+
+// Инициализация - выделяем первую превьюшку при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    const firstThumb = document.querySelector('.thumbnail-item img');
+    if (firstThumb) {
+        firstThumb.classList.add('active-thumbnail');
+    }
+});
 </script>
 {% endblock %}

@@ -4,6 +4,7 @@ from .models import Cart
 def cart(request):
     """Добавляет данные корзины в контекст всех шаблонов"""
     cart_data = {'total_quantity': 0}
+    cart = None
 
     if request.user.is_authenticated:
         cart = Cart.objects.filter(user=request.user).first()

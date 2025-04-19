@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from autoslug import AutoSlugField
 from meta.models import ModelMeta
 
+
 class Category(models.Model):
     """
     Модель категории товаров.
@@ -45,15 +46,13 @@ class Category(models.Model):
         """URL для детальной страницы категории."""
         return reverse("category_detail", kwargs={"slug": self.slug})
 
+
 class Product(ModelMeta, models.Model):
     """
     Модель товара (украшения) с поддержкой SEO-метатегов.
     Наследуется от ModelMeta для автоматического формирования meta-тегов.
-    Attributes:
-        name (CharField): Название товара.
-        price (DecimalField): Цена (макс. 10 цифр, 2 знака после запятой).
-        category (ForeignKey): Связь с моделью Category.
     """
+    # Основные поля товара
     name = models.CharField(
         max_length=200,
         verbose_name=_("Название"),
@@ -81,11 +80,16 @@ class Product(ModelMeta, models.Model):
         related_name="products",
         verbose_name=_("Категория")
     )
-    image = models.ImageField(
-        upload_to="products/",
-        verbose_name=_("Изображение"),
-        help_text=_("Рекомендуемый размер: 800x800px")
+
+    # Поле для главного изображения (переименовано из image в main_image для ясности)
+    main_image = models.ImageField(
+        upload_to="products/main/",
+        verbose_name=_("Главное изображение"),
+        help_text=_("Основное фото товара (рекомендуемый размер: 800x800px)"),
+        default="products/main/images.png"
     )
+
+    # Статусы и даты
     is_active = models.BooleanField(
         default=True,
         verbose_name=_("Активный"),
@@ -95,8 +99,13 @@ class Product(ModelMeta, models.Model):
         auto_now_add=True,
         verbose_name=_("Дата создания")
     )
+    is_featured = models.BooleanField(
+        'Рекомендуемый',
+        default=False,
+        help_text=_("Показывать товар в рекомендуемых?")
+    )
 
-    # Поля для SEO
+    # SEO-поля
     meta_title = models.CharField(
         max_length=60,
         blank=True,
@@ -118,8 +127,6 @@ class Product(ModelMeta, models.Model):
         "og_locale": "ru_RU",
     }
 
-    is_featured = models.BooleanField('Рекомендуемый', default=False)  # Добавляем, если отсутствует
-
     objects = models.Manager()
 
     class Meta:
@@ -138,3 +145,41 @@ class Product(ModelMeta, models.Model):
     def get_absolute_url(self):
         """URL для детальной страницы товара."""
         return reverse("product_detail", kwargs={"slug": self.slug})
+
+
+class ProductImage(models.Model):
+    """
+    Модель для дополнительных изображений товара.
+    Связана с Product через ForeignKey.
+    Позволяет загружать несколько изображений для одного товара.
+    """
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='additional_images',  # Используем related_name для доступа из Product
+        verbose_name=_("Товар")
+    )
+    image = models.ImageField(
+        upload_to='products/gallery/',
+        verbose_name=_("Изображение"),
+        help_text=_("Дополнительное фото товара")
+    )
+    alt_text = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name=_("Alt-текст"),
+        help_text=_("Описание изображения для SEO")
+    )
+    order = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("Порядок сортировки"),
+        help_text=_("Чем меньше число, тем выше фото в галерее")
+    )
+
+    class Meta:
+        verbose_name = _("Дополнительное изображение")
+        verbose_name_plural = _("Дополнительные изображения")
+        ordering = ['order']
+
+    def __str__(self):
+        return f"Изображение #{self.order} для {self.product.name}"

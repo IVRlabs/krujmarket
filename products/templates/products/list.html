@@ -65,7 +65,7 @@
         {% for product in products %}
         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
             <div class="card h-100">
-                <img src="{{ product.image.url }}" class="card-img-top"
+                <img src="{{ product.main_image.url }}" class="card-img-top"
                      style="height: 200px; object-fit: cover;"
                      alt="{{ product.name }}"
                      onerror="this.src='{% static 'images/placeholder.png' %}'">
@@ -74,7 +74,7 @@
                     <p class="text-danger fw-bold">{{ product.price }} ₽</p>
                 </div>
                 <div class="card-footer bg-white">
-                    <a href="{% url 'products:detail' product.slug %}" class="btn btn-sm btn-outline-dark">
+                    <a href="{% url 'products:product_detail' product.slug %}" class="btn btn-sm btn-outline-dark">
                         Подробнее
                     </a>
                     <button class="btn btn-sm btn-success float-end" onclick="addToCart({{ product.id }}, '{{ csrf_token }}')">

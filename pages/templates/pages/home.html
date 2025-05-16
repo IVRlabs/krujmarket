@@ -13,14 +13,5 @@
 </div>
 
 <!-- Дополнительно: можно показать 3 рекомендуемых товара -->
-<div class="container mt-5">
-    <h3 class="text-center mb-4">Наши хиты</h3>
-    <div class="row justify-content-center">
-        {% for product in featured_products %}
-        <div class="col-md-4 mb-4">
-            {% include 'products/_product_card.html' %}
-        </div>
-        {% endfor %}
-    </div>
-</div>
+
 {% endblock %}

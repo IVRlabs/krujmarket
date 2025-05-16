@@ -1,4 +1,5 @@
 # Стандартные импорты Django
+from autoslug.settings import slugify
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -6,6 +7,9 @@ from django.utils.translation import gettext_lazy as _
 # Сторонние библиотеки
 from autoslug import AutoSlugField
 from meta.models import ModelMeta
+
+from django.utils.text import slugify
+
 
 
 class Category(models.Model):
@@ -24,14 +28,24 @@ class Category(models.Model):
     slug = AutoSlugField(
         populate_from="name",
         unique=True,
-        verbose_name=_("URL-адрес"),
-        help_text=_("Автоматически генерируется из названия")
+        editable=True,
+        blank=True,
+        null=True,
     )
+
+
     description = models.TextField(
         blank=True,
         verbose_name=_("Описание"),
         help_text=_("Необязательное поле")
     )
+
+    #def save(self, *args, **kwargs):
+    #    if not self.slug:
+     #       self.slug = slugify(self.name)
+      #  super().save(*args, **kwargs)
+
+
 
     class Meta:
         verbose_name = _("Категория")
@@ -126,6 +140,18 @@ class Product(ModelMeta, models.Model):
         "og_type": "product",
         "og_locale": "ru_RU",
     }
+
+    # Новые поля ==============================================
+    available = models.BooleanField(
+        "В наличии",
+        default=True,
+        help_text=_("Отметьте, если товар есть в наличии")
+    )
+    is_custom = models.BooleanField(
+        "Эксклюзивный заказ",
+        default=False,
+        help_text=_("Если товар изготавливается индивидуально")
+    )
 
     objects = models.Manager()
 

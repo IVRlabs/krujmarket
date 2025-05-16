@@ -71,7 +71,7 @@ WSGI_APPLICATION = 'jewelry_shop.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'jewelry_db'),  # Используем переменные окружения
+        'NAME': os.getenv('DB_NAME', 'jewelry_shop_db'),  # Используем переменные окружения
         'USER': os.getenv('DB_USER', 'django_admin'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'defrost'),  # Пароль должен быть в .env!
         'HOST': os.getenv('DB_HOST', 'localhost'),

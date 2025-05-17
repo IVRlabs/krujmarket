@@ -42,7 +42,7 @@
 
                     <button class="btn btn-success btn-lg w-100 py-2"
                     onclick="checkAndAddToCart({{ product.id }}, '{{ csrf_token }}')"
-                    {% if not product.is_active %}disabled{% endif %}>
+                    >{% if not product.is_active %} disabled {% endif %}
                     {% if product.is_custom %}
 
                     <i class="bi bi-stars me-2"></i>Заказать индивидуально
@@ -72,25 +72,25 @@
         </div>
     </div>
 </div>
-<!-- Модальное окно для эксклюзивных товаров -->
+<!-- Модалка для эксклюзивных товаров -->
 <div id="customOrderModal" class="modal">
   <div class="modal-content">
     <h4>Индивидуальный заказ</h4>
     <p>Этот товар изготавливается по индивидуальным параметрам. Хотите продолжить?</p>
     <div class="d-flex justify-content-end gap-2 mt-4">
-      <button class="btn btn-outline-secondary" onclick="document.getElementById('customOrderModal').style.display='none'">Отмена</button>
+      <button class="btn btn-outline-secondary" onclick="closeModal('customOrderModal')">Отмена</button>
       <button id="confirmCustomOrder" class="btn btn-success">Подтвердить</button>
     </div>
   </div>
 </div>
 
-<!-- Модальное окно для товаров под заказ -->
+<!-- Модалка для товаров под заказ -->
 <div id="preorderModal" class="modal">
   <div class="modal-content">
     <h4>Товар под заказ</h4>
     <p>Этот товар временно отсутствует на складе. Хотите оформить предзаказ?</p>
     <div class="d-flex justify-content-end gap-2 mt-4">
-      <button class="btn btn-outline-secondary" onclick="document.getElementById('preorderModal').style.display='none'">Отмена</button>
+      <button class="btn btn-outline-secondary" onclick="closeModal('preorderModal')">Отмена</button>
       <button id="confirmPreorder" class="btn btn-success">Подтвердить</button>
     </div>
   </div>
@@ -207,9 +207,18 @@ function checkAndAddToCart(productId, csrfToken) {
   const isAvailable = {{ product.available|lower }};
   const isCustom = {{ product.is_custom|lower }};
 
+  // Удаляем предыдущие обработчики (если были)
+  const confirmCustomBtn = document.getElementById('confirmCustomOrder');
+  const confirmPreorderBtn = document.getElementById('confirmPreorder');
+
+  confirmCustomBtn?.replaceWith(confirmCustomBtn.cloneNode(true)); // "Сбрасываем" кнопку
+  confirmPreorderBtn?.replaceWith(confirmPreorderBtn.cloneNode(true));
+
   if (isCustom) {
     const modal = document.getElementById('customOrderModal');
     modal.classList.add('show');
+
+    // Назначаем новый обработчик
     document.getElementById('confirmCustomOrder').onclick = function() {
       addToCart(productId, csrfToken);
       modal.classList.remove('show');
@@ -217,6 +226,8 @@ function checkAndAddToCart(productId, csrfToken) {
   } else if (!isAvailable) {
     const modal = document.getElementById('preorderModal');
     modal.classList.add('show');
+
+    // Назначаем новый обработчик
     document.getElementById('confirmPreorder').onclick = function() {
       addToCart(productId, csrfToken);
       modal.classList.remove('show');
@@ -226,14 +237,21 @@ function checkAndAddToCart(productId, csrfToken) {
   }
 }
 
-// Закрытие модалок при клике вне контента
-document.querySelectorAll('.modal').forEach(modal => {
-  modal.addEventListener('click', function(e) {
-    if (e.target === this) {
-      this.classList.remove('show');
-    }
-  });
-});
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  modal.classList.remove('show');
+
+  // Дополнительно: сбрасываем обработчики (необязательно, но полезно)
+  if (modalId === 'customOrderModal') {
+    const btn = document.getElementById('confirmCustomOrder');
+    btn?.replaceWith(btn.cloneNode(true));
+  } else if (modalId === 'preorderModal') {
+    const btn = document.getElementById('confirmPreorder');
+    btn?.replaceWith(btn.cloneNode(true));
+  }
+}
+
+
 
 
 // Инициализация - выделяем первую превьюшку при загрузке

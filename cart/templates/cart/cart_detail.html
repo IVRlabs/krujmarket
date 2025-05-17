@@ -19,7 +19,12 @@
             <tbody>
                 {% for item in items %}
                 <tr>
-                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.product.name }} <img
+                            src="{{ item.product.main_image }}"
+                            class="img-thumbnail "
+                            >
+
+                    </td>
                     <td>
                         <form method="post" action="{% url 'cart:update_quantity' item.id %}">
                             {% csrf_token %}

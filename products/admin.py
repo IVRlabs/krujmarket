@@ -34,9 +34,6 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 
-    product_count.short_description = _('Количество товаров')
-
-
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     """Администрирование товаров с поддержкой галереи изображений"""

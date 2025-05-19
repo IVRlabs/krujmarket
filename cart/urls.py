@@ -14,4 +14,5 @@ urlpatterns = [
     # API-эндпоинты
     path('api/count/', views.cart_count_api, name='cart_count_api'),
     path('api/summary/', views.cart_summary, name='cart_summary'),
+    path('clear/', views.clear_cart, name='clear_cart'),
 ]

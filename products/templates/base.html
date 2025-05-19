@@ -110,13 +110,16 @@
                 <span id="cart-counter"
                 class="position-absolute top-0 start-100 translate-middle badge bg-danger rounded-pill"
                 style="font-size: 0.6em;">
-                {{ cart.total_quantity|default:0 }}
+                {{ cart_total_items|default:0 }}
                </span>
             </a>
 
         </div>
     </div>
     </nav>
+
+   <!-- Модалка -->
+    {% include 'orders/order_success.html' %}
 
     <!-- Остальное содержимое без изменений -->
     {% block content %}{% endblock %}

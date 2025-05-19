@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="order-container">
+    <div class="order-header">
+        <h2><i class="fas fa-receipt"></i> Оформление заказа</h2>
+    </div>
+
+    <!-- Список товаров -->
+    <div class="order-items">
+        {% for item in cart.items.all %}
+        <div class="order-item">
+            <img src="{{ item.product.main_image.url }}" alt="{{ item.product.name }}" class="item-image">
+            <div class="item-details">
+                <h4>{{ item.product.name }}</h4>
+                <p>{{ item.quantity }} × {{ item.price }} ₽ = {{ item.total_price }} ₽</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Форма данных клиента -->
+    <form id="order-form" method="post" action="{% url 'orders:create_order' %}">
+    {% csrf_token %}
+    <input type="hidden" name="payment_type" value="">
+
+        <div class="form-section">
+            <h3><i class="fas fa-user"></i> Ваши данные</h3>
+
+            <div class="form-group">
+                <label>ФИО*</label>
+                <input type="text" name="customer_name" required class="form-control">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Телефон*</label>
+                    <input type="tel" name="phone" required class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" class="form-control">
+                </div>
+            </div>
+        </div>
+
+        <!-- Кнопки оплаты -->
+        <!-- В блоке payment-options замените условие -->
+        <div class="payment-options">
+            <!-- Кнопка отмены -->
+
+            <button type="button" onclick="cancelOrder()" class="btn btn-danger">
+                <i class="fas fa-times"></i> Отменить
+            </button>
+            {% if has_in_stock_items %}
+            <button type="button" onclick="submitOrder('full')" class="btn-pay">
+                Оплатить {{ cart.total_price }} ₽
+            </button>
+            {% else %}
+            <button type="button" onclick="submitOrder('prepay')" class="btn-prepay">
+                Предоплата 30% ({% widthratio cart.total_price 1 0.3 %} ₽)
+            </button>
+            {% endif %}
+            <a href="https://partner.com/installment" class="btn-installment">
+                Рассрочка
+            </a>
+        </div>
+
+<input type="hidden" name="payment_type" id="payment-type-input">
+    </form>
+</div>
+
+
+<!-- Модальное окно -->
+<div id="order-modal" class="order-modal">
+  <div class="order-modal-content">
+    <div class="order-modal-header">
+      <h3><i class="fas fa-check-circle"></i> Заказ оформлен!</h3>
+    </div>
+    <div class="order-modal-body">
+      <p>Номер вашего заказа: <strong id="order-id"></strong></p>
+      <p>Мы свяжемся с вами для подтверждения.</p>
+    </div>
+    <div class="order-modal-footer">
+      <button onclick="window.location.href='{% url 'products:product_list' %}'" class="order-modal-btn">
+        Продолжить покупки
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+    .order-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn-danger {
+    background: #f44336;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+/* Стили модального окна */
+.order-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s;
+}
+
+.order-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 450px;
+  overflow: hidden;
+  box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+  transform: translateY(0);
+  animation: slideUp 0.4s;
+}
+
+.order-modal-header {
+  background: #4CAF50;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.order-modal-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.order-modal-body {
+  padding: 30px;
+  text-align: center;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.order-modal-footer {
+  padding: 15px;
+  text-align: center;
+  border-top: 1px solid #eee;
+}
+
+.order-modal-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.3s;
+}
+
+.order-modal-btn:hover {
+  background: #3e8e41;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Для иконки (если нет Font Awesome) */
+.fas {
+  margin-right: 10px;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+}
+
+.order-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+}
+
+.order-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.order-items {
+    margin-bottom: 2rem;
+}
+
+.order-item {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.item-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 5px;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.payment-options {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.btn-pay, .btn-prepay, .btn-installment {
+    padding: 1rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    flex: 1;
+}
+
+.btn-pay {
+    background: #4CAF50;
+    color: white;
+}
+
+.btn-prepay {
+    background: #FF9800;
+    color: white;
+}
+
+.btn-installment {
+    background: #2196F3;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+<script>
+
+function cancelOrder() {
+    if (confirm('Отменить заказ и очистить корзину?')) {
+        fetch("{% url 'cart:clear_cart' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(() => {
+            window.location.href = "{% url 'products:product_list' %}";
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            alert('Ошибка при отмене заказа');
+        });
+    }
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('order-form');
+    const nameInput = form.querySelector('[name="customer_name"]');
+    const phoneInput = form.querySelector('[name="phone"]');
+    const modal = document.getElementById('order-modal');
+
+    // Обработчики для кнопок оплаты
+    document.querySelector('.btn-pay')?.addEventListener('click', () => submitOrder('full'));
+    document.querySelector('.btn-prepay')?.addEventListener('click', () => submitOrder('prepay'));
+
+    // Функция отправки заказа
+    function submitOrder(paymentType) {
+        // Валидация полей
+        if (!nameInput.value.trim() || !phoneInput.value.trim()) {
+            alert('Пожалуйста, заполните имя и телефон');
+            return;
+        }
+
+        const formData = new FormData(form);
+        formData.append('payment_type', paymentType);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showSuccessModal(data.order_id);
+            } else {
+                alert('Ошибка: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            alert('Ошибка соединения');
+        });
+    }
+
+    // Показ модалки успеха
+    function showSuccessModal(orderId) {
+        document.getElementById('order-id').textContent = orderId;
+        modal.style.display = 'flex';
+
+        // Обнуляем корзину в интерфейсе
+        document.querySelectorAll('.cart-counter').forEach(el => {
+            el.textContent = '0';
+        });
+    }
+
+    // Закрытие модалки
+    modal.querySelector('.modal-close').addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    // Отмена заказа (очистка корзины)
+    modal.querySelector('.modal-cancel').addEventListener('click', () => {
+        fetch("{% url 'cart:clear_cart' %}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        })
+        .then(() => {
+            modal.style.display = 'none';
+            window.location.reload(); // Обновляем страницу
+        });
+    });
+});
+</script>
+{% endblock %}

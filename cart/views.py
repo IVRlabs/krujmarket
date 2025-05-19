@@ -92,6 +92,7 @@ def cart_detail(request):
     """
     Отображает содержимое корзины
     """
+    #print('!!!!!!!!!!!!!!!!!!!!!!!', request.session['cart'])
     cart = get_or_create_cart(request)
     items = cart.items.select_related('product')  # Оптимизация запросов
 
@@ -135,3 +136,10 @@ def cart_summary(request):
         'total_quantity': cart.total_quantity,
         'total_price': str(cart.total_price)
     })
+
+from django.http import JsonResponse
+
+def clear_cart(request):
+    cart = get_or_create_cart(request)
+    cart.items.all().delete()
+    return JsonResponse({'status': 'success'})

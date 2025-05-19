@@ -2,11 +2,26 @@ from django.db import models
 from django.conf import settings
 from products.models import Product  # Импорт модели товара из приложения market
 from django.db.models import Sum, F
+import json
+
+class CartManager(models.Manager):
+    def get_for_request(self, request):
+        """Получает корзину для текущего запроса"""
+        if request.user.is_authenticated:
+            return self.get(user=request.user)
+        else:
+            return self.get(session_key=request.session.session_key)
+
+
+
+
 class Cart(models.Model):
     """
     Модель корзины пользователя.
     Хранит связь с пользователем (для авторизованных) или session_key (для гостей)
     """
+    objects = CartManager()
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -25,6 +40,19 @@ class Cart(models.Model):
         auto_now_add=True,
         verbose_name="Дата создания"
     )
+
+    def get_items_json(self):
+        return json.dumps([
+            {
+                'name': item.product.name,
+                'price': float(item.price),
+                'quantity': item.quantity
+            }
+            for item in self.items.all()
+        ])
+
+    def has_in_stock_items(self):
+        return self.items.filter(product__in_stock=True).exists()
 
     class Meta:
         verbose_name = "Корзина"

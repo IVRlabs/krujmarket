@@ -16,13 +16,16 @@
                     <th></th>
                 </tr>
             </thead>
+
+            <!--  <img src="{{ item.product.main_image.url }}" class="item-image" ">  -->
+
+
             <tbody>
                 {% for item in items %}
                 <tr>
-                    <td>{{ item.product.name }} <img
-                            src="{{ item.product.main_image }}"
-                            class="img-thumbnail "
-                            >
+                    <td>
+                        {{ item.product.name }}
+                             <img src="{{ item.product.main_image.url }}" class="item-image item_move_right">
 
                     </td>
                     <td>
@@ -62,7 +65,7 @@
         <a href="{% url 'products:product_list' %}" class="btn btn-outline-secondary">
             Продолжить покупки
         </a>
-        <a href="{% url 'cart:checkout' %}" class="btn btn-primary ms-2">
+        <a href="{% url 'orders:create_order' %}" class="btn btn-primary ms-2">
             Оформить заказ
         </a>
     </div>
@@ -75,4 +78,17 @@
     </a>
     {% endif %}
 </div>
+<style>
+ .item-image {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 5px;
+}
+
+ .item_move_right {
+    margin-left: 25px;
+  }
+
+</style>
 {% endblock %}
